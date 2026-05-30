@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { FormsService } from './forms.service';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -15,6 +15,11 @@ export class FormsController {
         return this.forms.findActive(updatedSince);
     }
 
+    @Get('web')
+    list_web(@Query('updatedSince') updatedSince?: string) {
+        return this.forms.findActive_web(updatedSince);
+    }
+
     @Get(':id')
     get(@Param('id') id: string) {
         return this.forms.findOne(id);
@@ -29,7 +34,14 @@ export class FormsController {
     @Roles('admin')
     @Put(':id')
     update(@Param('id') id: string, @Body() dto: UpdateFormDto) {
-        return this.forms.update(id, dto);
+        console.log('dto: ', dto)
+        return this.forms.updateById(id, dto);
+    }
+
+    @Roles('admin')
+    @Delete(':id')
+    delete(@Param('id') id: string) {
+        return this.forms.deleteById(id);
     }
 
     // opcional: upsert

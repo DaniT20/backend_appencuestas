@@ -1,7 +1,6 @@
-// src/users/seed.ts
 import 'dotenv/config';
 import * as mongoose from 'mongoose';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { UserSchema } from './user.schema';
 
 (async () => {
@@ -13,9 +12,16 @@ import { UserSchema } from './user.schema';
 
     await User.updateOne(
         { username },
-        { username, passwordHash, role: 'admin' },
+        {
+            name: 'Administrador',
+            username,
+            passwordHash,
+            role: 'admin',
+            active: true
+        },
         { upsert: true }
     );
+
     console.log('Seed OK: admin / Admin123*');
     await mongoose.disconnect();
 })();

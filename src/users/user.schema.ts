@@ -1,10 +1,24 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+export type UserRole = 'admin' | 'enumerator';
+
 @Schema({ timestamps: true })
 export class User extends Document {
-    @Prop({ unique: true, required: true }) username: string;
-    @Prop({ required: true }) passwordHash: string; // bcrypt hash
-    @Prop({ default: 'enumerator' }) role: 'admin' | 'enumerator';
+    @Prop({ required: true, trim: true })
+    name: string;
+
+    @Prop({ unique: true, required: true, trim: true, lowercase: true })
+    username: string;
+
+    @Prop({ required: true })
+    passwordHash: string; // bcrypt hash
+
+    @Prop({ default: 'enumerator', enum: ['admin', 'enumerator'] })
+    role: UserRole;
+
+    @Prop({ default: true })
+    active: boolean;
 }
+
 export const UserSchema = SchemaFactory.createForClass(User);
