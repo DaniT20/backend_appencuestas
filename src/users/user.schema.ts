@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export type UserRole = 'admin' | 'enumerator';
+export type UserRole = 'admin' | 'enumerator' | 'gestor';
 
 @Schema({ timestamps: true })
 export class User extends Document {
@@ -14,8 +14,14 @@ export class User extends Document {
     @Prop({ required: true })
     passwordHash: string; // bcrypt hash
 
-    @Prop({ default: 'enumerator', enum: ['admin', 'enumerator'] })
+    @Prop({ default: 'enumerator', enum: ['admin', 'enumerator', 'gestor'] })
     role: UserRole;
+
+    @Prop({ default: null })
+    parroquia: string | null;
+
+    @Prop({ default: false })
+    lider: boolean;
 
     @Prop({ default: true })
     active: boolean;

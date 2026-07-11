@@ -24,7 +24,7 @@ export class FormsService {
             }
             questionIds.add(q.id);
 
-            if (!['open', 'single', 'multiple', 'matrix'].includes(q.type)) {
+            if (!['open', 'single', 'multiple', 'matrix', 'list'].includes(q.type)) {
                 throw new BadRequestException(`Tipo de pregunta inválido: ${q.type}`);
             }
 
@@ -147,6 +147,42 @@ export class FormsService {
                     );
                 }
             }
+
+            if (q.type === 'list') {
+                const items = (q.listItems || []).filter((i: any) => i?.label?.trim());
+
+                if (!items.length) {
+                    throw new BadRequestException(
+                        `La pregunta lista "${q.text}" debe tener al menos un item.`,
+                    );
+                }
+
+                const itemIds = new Set<string>();
+                for (const item of items) {
+                    if (!item?.id?.trim()) {
+                        throw new BadRequestException(
+                            `La pregunta lista "${q.text}" tiene items sin id.`,
+                        );
+                    }
+                    if (itemIds.has(item.id)) {
+                        throw new BadRequestException(
+                            `La pregunta lista "${q.text}" tiene items con id duplicado: "${item.id}".`,
+                        );
+                    }
+                    itemIds.add(item.id);
+                }
+
+                if (q.options?.length) {
+                    throw new BadRequestException(
+                        `La pregunta lista "${q.text}" no debe usar options.`,
+                    );
+                }
+                if (q.matrixRows?.length || q.matrixColumns?.length) {
+                    throw new BadRequestException(
+                        `La pregunta lista "${q.text}" no debe usar matrixRows ni matrixColumns.`,
+                    );
+                }
+            }
         }
 
         for (const q of questions) {
@@ -208,10 +244,15 @@ export class FormsService {
         }
     }
 
-    findActive(updatedSince?: string) {
+    findActive(userId: string, updatedSince?: string) {
         const q: any = {
             active: true,
-            show: { $ne: false }
+            show: { $ne: false },
+            $or: [
+                { assignedTo: { $exists: false } },
+                { assignedTo: { $size: 0 } },
+                { assignedTo: userId },
+            ],
         };
 
         if (updatedSince) q.updatedAt = { $gt: new Date(updatedSince) };

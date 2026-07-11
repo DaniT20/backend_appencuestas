@@ -42,6 +42,8 @@ export class UsersService {
       username,
       passwordHash,
       role: dto.role,
+      parroquia: dto.parroquia ?? null,
+      lider: dto.lider ?? false,
       active: dto.active ?? true,
     });
 
@@ -60,7 +62,8 @@ export class UsersService {
       name: string;
       username: string;
       password: string;
-      role: 'admin' | 'enumerator';
+      role: 'admin' | 'enumerator' | 'gestor';
+      parroquia?: string;
       active: boolean;
     }> = [];
 
@@ -74,6 +77,7 @@ export class UsersService {
       const username = item?.username?.trim?.().toLowerCase?.() ?? '';
       const password = item?.password ?? '';
       const role = item?.role;
+      const parroquia = item?.parroquia ?? undefined;
       const active = item?.active ?? true;
 
       if (!name) {
@@ -96,7 +100,7 @@ export class UsersService {
         continue;
       }
 
-      if (role !== 'admin' && role !== 'enumerator') {
+      if (role !== 'admin' && role !== 'enumerator' && role !== 'gestor') {
         errors.push({ row, username, reason: 'invalid role' });
         continue;
       }
@@ -114,6 +118,7 @@ export class UsersService {
         username,
         password,
         role,
+        parroquia,
         active,
       });
     }
@@ -140,7 +145,8 @@ export class UsersService {
       name: string;
       username: string;
       passwordHash: string;
-      role: 'admin' | 'enumerator';
+      role: 'admin' | 'enumerator' | 'gestor';
+      parroquia?: string;
       active: boolean;
     }> = [];
 
@@ -161,6 +167,7 @@ export class UsersService {
         username: item.username,
         passwordHash,
         role: item.role,
+        parroquia: item.parroquia,
         active: item.active,
       });
     }
@@ -178,7 +185,7 @@ export class UsersService {
   }
 
   async findAll(query: QueryUsersDto) {
-    const { page = 1, limit = 10, search, active } = query;
+    const { page = 1, limit = 10, search, active, role, parroquia } = query;
 
     const filter: FilterQuery<User> = {};
 
@@ -189,6 +196,10 @@ export class UsersService {
         { name: { $regex: text, $options: 'i' } },
       ];
     }
+
+    if (role) filter.role = role;
+
+    if (parroquia?.trim()) filter.parroquia = parroquia.trim();
 
     if (active === 'true' || active === 'false') {
       filter.active = active === 'true';
@@ -251,6 +262,14 @@ export class UsersService {
 
     if (dto.role !== undefined) {
       payload.role = dto.role;
+    }
+
+    if (dto.parroquia !== undefined) {
+      payload.parroquia = dto.parroquia || null;
+    }
+
+    if (dto.lider !== undefined) {
+      payload.lider = dto.lider;
     }
 
     if (dto.active !== undefined) {

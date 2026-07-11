@@ -77,11 +77,21 @@ class MatrixColumnSchemaClass {
 const MatrixColumnSchema = SchemaFactory.createForClass(MatrixColumnSchemaClass);
 
 @Schema({ _id: false })
+class ListItemSchemaClass {
+    @Prop({ required: true })
+    id: string;
+
+    @Prop({ required: true })
+    label: string;
+}
+const ListItemSchema = SchemaFactory.createForClass(ListItemSchemaClass);
+
+@Schema({ _id: false })
 class QuestionSchemaClass {
     @Prop({ required: true })
     id: string;
 
-    @Prop({ required: true, enum: ['open', 'single', 'multiple', 'matrix'] })
+    @Prop({ required: true, enum: ['open', 'single', 'multiple', 'matrix', 'list'] })
     type: string;
 
     @Prop({ required: true })
@@ -116,6 +126,12 @@ class QuestionSchemaClass {
 
     @Prop()
     maxRowsToAnswer?: number;
+
+    @Prop({ type: [ListItemSchema], default: [] })
+    listItems: any[];
+
+    @Prop({ default: false })
+    hasValueSelection?: boolean;
 }
 const QuestionSchema = SchemaFactory.createForClass(QuestionSchemaClass);
 
@@ -138,5 +154,8 @@ export class Form extends Document {
 
     @Prop({ default: true })
     show: boolean;
+
+    @Prop({ type: [String], default: [] })
+    assignedTo: string[];
 }
 export const FormSchema = SchemaFactory.createForClass(Form);

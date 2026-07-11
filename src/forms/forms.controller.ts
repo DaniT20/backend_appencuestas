@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { FormsService } from './forms.service';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -11,8 +11,8 @@ export class FormsController {
     constructor(private forms: FormsService) { }
 
     @Get()
-    list(@Query('updatedSince') updatedSince?: string) {
-        return this.forms.findActive(updatedSince);
+    list(@Req() req: any, @Query('updatedSince') updatedSince?: string) {
+        return this.forms.findActive(req.user?.userId, updatedSince);
     }
 
     @Get('web')

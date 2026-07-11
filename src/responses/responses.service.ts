@@ -45,6 +45,17 @@ export class ResponsesService {
                 : [];
         }
 
+        if (answer?.type === 'list') {
+            normalized.listAnswers = Array.isArray(answer?.listAnswers)
+                ? answer.listAnswers.map((item: any) => ({
+                    itemId: item?.itemId,
+                    itemLabel: item?.itemLabel,
+                    value: item?.value ?? null,
+                    justification: item?.justification ?? '',
+                }))
+                : [];
+        }
+
         return normalized;
     }
 
@@ -234,6 +245,52 @@ export class ResponsesService {
                     ) {
                         throw new BadRequestException(
                             `La especificación de la fila "${row.label}" excede el máximo de ${row.otherMaxLength} caracteres en la pregunta "${q.text}".`,
+                        );
+                    }
+                }
+            }
+
+            if (q.type === 'list') {
+                const listAnswers = Array.isArray(answer.listAnswers) ? answer.listAnswers : [];
+                const validItems = new Map<string, any>((q.listItems || []).map((i: any) => [i.id, i]));
+
+                if (q.required && !listAnswers.length) {
+                    throw new BadRequestException(`La pregunta lista "${q.text}" es obligatoria.`);
+                }
+
+                if (q.required && listAnswers.length < validItems.size) {
+                    throw new BadRequestException(
+                        `Debes responder todos los items en la pregunta "${q.text}".`,
+                    );
+                }
+
+                const seenItems = new Set<string>();
+
+                for (const item of listAnswers) {
+                    if (!item?.itemId || !validItems.has(item.itemId)) {
+                        throw new BadRequestException(
+                            `Item inválido en pregunta lista "${q.text}": ${item?.itemId}`,
+                        );
+                    }
+
+                    if (seenItems.has(item.itemId)) {
+                        throw new BadRequestException(
+                            `El item ${item.itemId} está repetido en la pregunta "${q.text}".`,
+                        );
+                    }
+                    seenItems.add(item.itemId);
+
+                    if (q.hasValueSelection && item.value == null) {
+                        const itemDef = validItems.get(item.itemId);
+                        throw new BadRequestException(
+                            `Debes seleccionar SI o NO para "${itemDef?.label}" en la pregunta "${q.text}".`,
+                        );
+                    }
+
+                    if (q.required && !String(item?.justification ?? '').trim()) {
+                        const itemDef = validItems.get(item.itemId);
+                        throw new BadRequestException(
+                            `Debes justificar tu respuesta para "${itemDef?.label}" en la pregunta "${q.text}".`,
                         );
                     }
                 }
@@ -528,6 +585,39 @@ export class ResponsesService {
         const questionText = q?.text ?? questionId;
         const questionType = q?.type ?? 'open';
 
+        if (questionType === 'list') {
+            const hasValueSelection = q?.hasValueSelection ?? false;
+
+            const labelExpr = hasValueSelection
+                ? {
+                    $concat: [
+                        { $ifNull: ['$listAnswers.itemLabel', '$listAnswers.itemId'] },
+                        ' → ',
+                        { $cond: [{ $eq: ['$listAnswers.value', true] }, 'Sí', 'No'] },
+                    ],
+                }
+                : { $ifNull: ['$listAnswers.itemLabel', '$listAnswers.itemId'] };
+
+            const agg = await this.responseModel.aggregate([
+                { $match: { formId } },
+                { $unwind: '$answers' },
+                { $match: { 'answers.questionId': questionId } },
+                { $project: { listAnswers: { $ifNull: ['$answers.listAnswers', []] } } },
+                { $unwind: '$listAnswers' },
+                { $project: { label: labelExpr } },
+                { $group: { _id: '$label', count: { $sum: 1 } } },
+                { $sort: { count: -1, _id: 1 } },
+            ]);
+
+            const totalAnswers = agg.reduce((acc, it) => acc + (it.count || 0), 0);
+            const items = agg.map((it) => ({
+                label: it._id ?? 'Sin respuesta',
+                count: it.count || 0,
+            }));
+
+            return { formId, questionId, questionText, totalAnswers, items };
+        }
+
         if (questionType === 'matrix') {
             const agg = await this.responseModel.aggregate([
                 { $match: { formId } },
@@ -767,7 +857,21 @@ export class ResponsesService {
                             row.columnLabel ?? row.columnId ?? null;
                     }
 
-                    continue; // 🔥 evita seguir abajo
+                    continue;
+
+                } else if (answer.type === 'list') {
+                    const list = answer.listAnswers ?? [];
+
+                    flatAnswers[answer.questionId] = list;
+
+                    for (const item of list) {
+                        const val = item.value != null
+                            ? `${item.value ? 'Sí' : 'No'}: ${item.justification ?? ''}`
+                            : item.justification ?? '';
+                        flatAnswers[`${answer.questionId}__${item.itemId}`] = val;
+                    }
+
+                    continue;
                 }
 
                 flatAnswers[answer.questionId] = value;
@@ -808,6 +912,10 @@ export class ResponsesService {
                 matrixRows: (q.matrixRows ?? []).map((r: any) => ({ id: r.id, label: r.label })),
                 matrixColumns: (q.matrixColumns ?? []).map((c: any) => ({ id: c.id, label: c.label })),
             }),
+            ...(q.type === 'list' && {
+                listItems: (q.listItems ?? []).map((i: any) => ({ id: i.id, label: i.label })),
+                hasValueSelection: q.hasValueSelection ?? false,
+            }),
         }));
 
         const responses: any[] = [];
@@ -824,6 +932,7 @@ export class ResponsesService {
                 if (a.optionIds?.length) entry.optionIds = a.optionIds;
                 if (a.optionLabels?.length) entry.optionLabels = a.optionLabels;
                 if (a.matrixAnswers?.length) entry.matrixAnswers = a.matrixAnswers;
+                if (a.listAnswers?.length) entry.listAnswers = a.listAnswers;
                 if (a.followupText) entry.followupText = a.followupText;
                 if (a.otherText) entry.otherText = a.otherText;
                 responses.push(entry);
@@ -1097,6 +1206,69 @@ export class ResponsesService {
                     questionText: q.text,
                     type: 'matrix',
                     matrixAnswers: normalizedMatrix,
+                });
+
+                continue;
+            }
+
+            // LIST
+            if (q.type === 'list') {
+                const listAnswers = Array.isArray(rawValue) ? rawValue : [];
+
+                if (q.required && listAnswers.length === 0) {
+                    throw new BadRequestException(
+                        `La pregunta "${q.text}" es obligatoria.`,
+                    );
+                }
+
+                if (!listAnswers.length) {
+                    continue;
+                }
+
+                const validItems = new Map(
+                    (q.listItems ?? []).map((i: any) => [i.id, i]),
+                );
+
+                if (q.required && listAnswers.length < validItems.size) {
+                    throw new BadRequestException(
+                        `Debes responder todos los items en la pregunta "${q.text}".`,
+                    );
+                }
+
+                const normalizedList = listAnswers.map((item: any) => {
+                    const itemDef: any = validItems.get(item.itemId);
+
+                    if (!itemDef) {
+                        throw new BadRequestException(
+                            `Item inválido en la pregunta "${q.text}".`,
+                        );
+                    }
+
+                    if (q.hasValueSelection && item.value == null) {
+                        throw new BadRequestException(
+                            `Debes seleccionar SI o NO para "${itemDef.label}" en la pregunta "${q.text}".`,
+                        );
+                    }
+
+                    if (q.required && !String(item.justification ?? '').trim()) {
+                        throw new BadRequestException(
+                            `Debes justificar tu respuesta para "${itemDef.label}" en la pregunta "${q.text}".`,
+                        );
+                    }
+
+                    return {
+                        itemId: itemDef.id,
+                        itemLabel: itemDef.label,
+                        value: q.hasValueSelection ? !!item.value : null,
+                        justification: String(item.justification ?? ''),
+                    };
+                });
+
+                normalizedAnswers.push({
+                    questionId: q.id,
+                    questionText: q.text,
+                    type: 'list',
+                    listAnswers: normalizedList,
                 });
             }
         }

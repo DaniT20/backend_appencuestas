@@ -4,11 +4,19 @@ import { IsBooleanString, IsInt, IsOptional, IsString, Min } from 'class-validat
 export class QueryUsersDto {
     @IsOptional()
     @IsString()
-    search?: string; // busca en username y name
+    search?: string;
+
+    @IsOptional()
+    @IsString()
+    role?: string;
+
+    @IsOptional()
+    @IsString()
+    parroquia?: string;
 
     @IsOptional()
     @IsBooleanString()
-    active?: string; // 'true' | 'false'
+    active?: string;
 
     @Transform(({ value }) => parseInt(value, 10))
     @IsOptional()

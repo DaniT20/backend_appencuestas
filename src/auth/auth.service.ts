@@ -20,18 +20,16 @@ export class AuthService {
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) throw new UnauthorizedException('Credenciales inválidas');
 
-        // 🔐 REGLA CLAVE
         if (user.role === 'enumerator' && clientType === 'web') {
-            throw new ForbiddenException(
-                /* 'El usuario enumerator no puede ingresar al sistema web' */
-                'Credenciales inválidas'
-            );
+            throw new ForbiddenException('Credenciales inválidas');
         }
 
         const payload = {
             sub: user._id,
             username: user.username,
+            name: user.name ?? null,
             role: user.role,
+            parroquia: user.parroquia ?? null,
         };
 
         const token = this.jwt.sign(payload, {
@@ -44,6 +42,7 @@ export class AuthService {
             user: {
                 id: user._id,
                 username: user.username,
+                name: user.name ?? '',
                 role: user.role,
             }
         };

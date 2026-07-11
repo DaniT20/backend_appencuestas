@@ -18,8 +18,16 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
     @IsString()
     @IsOptional()
-    @IsIn(['admin', 'enumerator'])
-    role?: 'admin' | 'enumerator';
+    @IsIn(['admin', 'enumerator', 'gestor'])
+    role?: 'admin' | 'enumerator' | 'gestor';
+
+    @IsString()
+    @IsOptional()
+    parroquia?: string;
+
+    @IsBoolean()
+    @IsOptional()
+    lider?: boolean;
 
     @IsBoolean()
     @IsOptional()

@@ -30,6 +30,7 @@ createNestServer(server)
   .catch(err => console.error('Nest broken', err));
 export const api: functions.HttpsFunction = functions.https.onRequest(server); */
 
+/* 
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter, NestExpressApplication } from '@nestjs/platform-express';
 import * as express from 'express';
@@ -117,3 +118,88 @@ export const api: functions.HttpsFunction = functions.runWith({ memory: '4GB' })
     }
   }
 );
+*/
+
+import { NestFactory } from '@nestjs/core';
+import { ExpressAdapter, NestExpressApplication } from '@nestjs/platform-express';
+import * as express from 'express';
+import * as functions from 'firebase-functions';
+import { AppModule } from './app.module';
+
+const server = express();
+
+server.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+  );
+
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+  );
+
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
+  next();
+});
+
+let nestApp: NestExpressApplication;
+
+async function createNestServer() {
+  if (!nestApp) {
+    const adapter = new ExpressAdapter(server);
+
+    nestApp = await NestFactory.create<NestExpressApplication>(
+      AppModule,
+      adapter,
+      {
+        cors: false,
+      },
+    );
+
+    await nestApp.init();
+
+    console.log('✅ Nest Ready');
+  }
+
+  return nestApp;
+}
+
+export const api = functions
+  .runWith({
+    memory: '4GB',
+  })
+  .https.onRequest(async (req, res) => {
+    try {
+      await createNestServer();
+      server(req, res);
+    } catch (error) {
+      console.error('❌ Error inicializando Nest:', error);
+
+      const origin = req.headers.origin;
+
+      if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+      }
+
+      res.setHeader(
+        'Access-Control-Allow-Headers',
+        'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+      );
+
+      res.status(500).json({
+        message: 'Internal server error',
+      });
+    }
+  });

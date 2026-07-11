@@ -10,6 +10,8 @@ import { UsersModule } from './users/users.module';
 import { FormsModule } from './forms/forms.module';
 import { ResponsesModule } from './responses/responses.module';
 import { BiModule } from './bi/bi.module';
+import { TrackingModule } from './tracking/tracking.module';
+import { PublicDataModule } from './public-data/public-data.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { BiModule } from './bi/bi.module';
     FormsModule,
     ResponsesModule,
     BiModule,
+    TrackingModule,
+    PublicDataModule,
   ],
   controllers: [AppController],   // 👈 IMPORTANTE
   providers: [AppService],        // 👈 IMPORTANTE

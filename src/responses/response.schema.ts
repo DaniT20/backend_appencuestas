@@ -21,6 +21,22 @@ class MatrixAnswerItemSchemaClass {
 const MatrixAnswerItemSchema = SchemaFactory.createForClass(MatrixAnswerItemSchemaClass);
 
 @Schema({ _id: false })
+class ListAnswerItemSchemaClass {
+    @Prop({ required: true })
+    itemId: string;
+
+    @Prop()
+    itemLabel?: string;
+
+    @Prop()
+    value?: boolean;
+
+    @Prop({ default: '' })
+    justification: string;
+}
+const ListAnswerItemSchema = SchemaFactory.createForClass(ListAnswerItemSchemaClass);
+
+@Schema({ _id: false })
 class AnswerSchemaClass {
     @Prop()
     questionText?: string;
@@ -28,7 +44,7 @@ class AnswerSchemaClass {
     @Prop({ required: true })
     questionId: string;
 
-    @Prop({ required: true, enum: ['open', 'single', 'multiple', 'matrix'] })
+    @Prop({ required: true, enum: ['open', 'single', 'multiple', 'matrix', 'list'] })
     type: string;
 
     @Prop()
@@ -48,6 +64,9 @@ class AnswerSchemaClass {
 
     @Prop({ type: [MatrixAnswerItemSchema], default: [] })
     matrixAnswers?: MatrixAnswerItemSchemaClass[];
+
+    @Prop({ type: [ListAnswerItemSchema], default: [] })
+    listAnswers?: ListAnswerItemSchemaClass[];
 }
 const AnswerSchema = SchemaFactory.createForClass(AnswerSchemaClass);
 

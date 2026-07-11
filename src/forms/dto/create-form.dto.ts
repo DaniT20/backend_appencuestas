@@ -110,14 +110,24 @@ class MatrixColumnDto {
     label: string;
 }
 
+class ListItemDto {
+    @IsString()
+    @IsNotEmpty()
+    id: string;
+
+    @IsString()
+    @IsNotEmpty()
+    label: string;
+}
+
 class QuestionDto {
     @IsString()
     @IsNotEmpty()
     id: string;
 
     @IsString()
-    @IsIn(['open', 'single', 'multiple', 'matrix'])
-    type: 'open' | 'single' | 'multiple' | 'matrix';
+    @IsIn(['open', 'single', 'multiple', 'matrix', 'list'])
+    type: 'open' | 'single' | 'multiple' | 'matrix' | 'list';
 
     @IsString()
     @IsNotEmpty()
@@ -174,6 +184,17 @@ class QuestionDto {
     @Min(1)
     @IsOptional()
     maxRowsToAnswer?: number;
+
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => ListItemDto)
+    @IsOptional()
+    @ArrayMinSize(1)
+    listItems?: ListItemDto[];
+
+    @IsBoolean()
+    @IsOptional()
+    hasValueSelection?: boolean;
 }
 
 export class CreateFormDto {
@@ -198,6 +219,11 @@ export class CreateFormDto {
     show?: boolean;
 
     @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    assignedTo?: string[];
+
+    @IsArray()
     @ValidateNested({ each: true })
     @Type(() => QuestionDto)
     questions: QuestionDto[];
@@ -220,6 +246,11 @@ export class UpdateFormDto {
     @IsBoolean()
     @IsOptional()
     show?: boolean;
+
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    assignedTo?: string[];
 
     @IsArray()
     @ValidateNested({ each: true })
