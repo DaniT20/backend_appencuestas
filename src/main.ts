@@ -125,6 +125,7 @@ import { ExpressAdapter, NestExpressApplication } from '@nestjs/platform-express
 import * as express from 'express';
 import * as functions from 'firebase-functions';
 import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
 
 const server = express();
 
@@ -167,6 +168,8 @@ async function createNestServer() {
         cors: false,
       },
     );
+
+    nestApp.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
     await nestApp.init();
 

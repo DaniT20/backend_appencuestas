@@ -19,8 +19,12 @@ export class CreateUserDto {
     role: 'admin' | 'enumerator' | 'gestor';
 
     @IsString()
+    @IsNotEmpty()
+    parroquia: string;
+
+    @IsString()
     @IsOptional()
-    parroquia?: string;
+    phone?: string;
 
     @IsBoolean()
     @IsOptional()

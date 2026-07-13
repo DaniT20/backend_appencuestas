@@ -43,6 +43,7 @@ export class UsersService {
       passwordHash,
       role: dto.role,
       parroquia: dto.parroquia ?? null,
+      phone: dto.phone ?? null,
       lider: dto.lider ?? false,
       active: dto.active ?? true,
     });
@@ -266,6 +267,10 @@ export class UsersService {
 
     if (dto.parroquia !== undefined) {
       payload.parroquia = dto.parroquia || null;
+    }
+
+    if (dto.phone !== undefined) {
+      payload.phone = dto.phone || null;
     }
 
     if (dto.lider !== undefined) {

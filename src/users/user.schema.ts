@@ -20,6 +20,9 @@ export class User extends Document {
     @Prop({ default: null })
     parroquia: string | null;
 
+    @Prop({ default: null })
+    phone: string | null;
+
     @Prop({ default: false })
     lider: boolean;
 

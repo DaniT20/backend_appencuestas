@@ -12,6 +12,7 @@ import { ResponsesModule } from './responses/responses.module';
 import { BiModule } from './bi/bi.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { PublicDataModule } from './public-data/public-data.module';
+import { ParishesModule } from './parishes/parishes.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PublicDataModule } from './public-data/public-data.module';
     BiModule,
     TrackingModule,
     PublicDataModule,
+    ParishesModule,
   ],
   controllers: [AppController],   // 👈 IMPORTANTE
   providers: [AppService],        // 👈 IMPORTANTE

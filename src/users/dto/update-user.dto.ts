@@ -25,6 +25,10 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     @IsOptional()
     parroquia?: string;
 
+    @IsString()
+    @IsOptional()
+    phone?: string;
+
     @IsBoolean()
     @IsOptional()
     lider?: boolean;

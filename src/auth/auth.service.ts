@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcryptjs';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,10 @@ export class AuthService {
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) throw new UnauthorizedException('Credenciales inválidas');
+
+        if (!user.active) {
+            throw new ForbiddenException('Cuenta pendiente de activación. Contacta al administrador.');
+        }
 
         if (user.role === 'enumerator' && clientType === 'web') {
             throw new ForbiddenException('Credenciales inválidas');
@@ -46,5 +51,18 @@ export class AuthService {
                 role: user.role,
             }
         };
+    }
+
+    async register(dto: RegisterDto) {
+        await this.users.create({
+            name: dto.name,
+            username: dto.username,
+            password: dto.password,
+            role: 'enumerator',
+            parroquia: dto.parroquia,
+            phone: dto.phone ?? undefined,
+            active: false,
+        });
+        return { message: 'Cuenta creada. Un administrador debe activarla antes de que puedas ingresar.' };
     }
 }
