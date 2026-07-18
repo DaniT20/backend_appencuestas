@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateUserDto } from './create-user.dto';
-import { IsBoolean, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
     @IsString()
@@ -21,9 +21,10 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     @IsIn(['admin', 'enumerator', 'gestor'])
     role?: 'admin' | 'enumerator' | 'gestor';
 
-    @IsString()
+    @IsArray()
+    @IsString({ each: true })
     @IsOptional()
-    parroquia?: string;
+    parroquias?: string[];
 
     @IsString()
     @IsOptional()

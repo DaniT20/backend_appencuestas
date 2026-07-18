@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateUserDto {
     @IsString()
@@ -18,9 +18,10 @@ export class CreateUserDto {
     @IsIn(['admin', 'enumerator', 'gestor'])
     role: 'admin' | 'enumerator' | 'gestor';
 
-    @IsString()
-    @IsNotEmpty()
-    parroquia: string;
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    parroquias?: string[];
 
     @IsString()
     @IsOptional()

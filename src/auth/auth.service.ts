@@ -34,7 +34,8 @@ export class AuthService {
             username: user.username,
             name: user.name ?? null,
             role: user.role,
-            parroquia: user.parroquia ?? null,
+            parroquias: user.parroquias ?? [],
+            lider: user.lider ?? false,
         };
 
         const token = this.jwt.sign(payload, {
@@ -59,7 +60,7 @@ export class AuthService {
             username: dto.username,
             password: dto.password,
             role: 'enumerator',
-            parroquia: dto.parroquia,
+            parroquias: dto.parroquias ?? [],
             phone: dto.phone ?? undefined,
             active: false,
         });

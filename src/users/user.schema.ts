@@ -17,8 +17,8 @@ export class User extends Document {
     @Prop({ default: 'enumerator', enum: ['admin', 'enumerator', 'gestor'] })
     role: UserRole;
 
-    @Prop({ default: null })
-    parroquia: string | null;
+    @Prop({ type: [String], default: [] })
+    parroquias: string[];
 
     @Prop({ default: null })
     phone: string | null;

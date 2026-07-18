@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, MinLength, IsOptional } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class RegisterDto {
     @IsString()
@@ -14,9 +14,10 @@ export class RegisterDto {
     @MinLength(6)
     password: string;
 
-    @IsString()
-    @IsNotEmpty()
-    parroquia: string;
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    parroquias?: string[];
 
     @IsString()
     @IsOptional()

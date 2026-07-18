@@ -126,8 +126,8 @@ class QuestionDto {
     id: string;
 
     @IsString()
-    @IsIn(['open', 'single', 'multiple', 'matrix', 'list'])
-    type: 'open' | 'single' | 'multiple' | 'matrix' | 'list';
+    @IsIn(['open', 'single', 'multiple', 'matrix', 'list', 'media'])
+    type: 'open' | 'single' | 'multiple' | 'matrix' | 'list' | 'media';
 
     @IsString()
     @IsNotEmpty()

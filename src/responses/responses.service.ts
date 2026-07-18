@@ -56,6 +56,12 @@ export class ResponsesService {
                 : [];
         }
 
+        if (answer?.type === 'media') {
+            normalized.mediaText = answer?.mediaText ?? '';
+            normalized.mediaUrl  = answer?.mediaUrl  ?? '';
+            normalized.mediaKey  = answer?.mediaKey  ?? '';
+        }
+
         return normalized;
     }
 
@@ -293,6 +299,14 @@ export class ResponsesService {
                             `Debes justificar tu respuesta para "${itemDef?.label}" en la pregunta "${q.text}".`,
                         );
                     }
+                }
+            }
+
+            if (q.type === 'media') {
+                if (q.required && !String(answer?.mediaText ?? '').trim()) {
+                    throw new BadRequestException(
+                        `La pregunta "${q.text}" requiere una descripción.`,
+                    );
                 }
             }
         }
@@ -872,6 +886,13 @@ export class ResponsesService {
                     }
 
                     continue;
+
+                } else if (answer.type === 'media') {
+                    flatAnswers[answer.questionId] = {
+                        text: answer.mediaText ?? '',
+                        url:  answer.mediaUrl  ?? '',
+                    };
+                    continue;
                 }
 
                 flatAnswers[answer.questionId] = value;
@@ -935,6 +956,8 @@ export class ResponsesService {
                 if (a.listAnswers?.length) entry.listAnswers = a.listAnswers;
                 if (a.followupText) entry.followupText = a.followupText;
                 if (a.otherText) entry.otherText = a.otherText;
+                if (a.mediaText !== undefined) entry.mediaText = a.mediaText;
+                if (a.mediaUrl) entry.mediaUrl = a.mediaUrl;
                 responses.push(entry);
             }
         }
@@ -1269,6 +1292,32 @@ export class ResponsesService {
                     questionText: q.text,
                     type: 'list',
                     listAnswers: normalizedList,
+                });
+            }
+
+            // MEDIA
+            if (q.type === 'media') {
+                const mediaText = rawValue?.mediaText != null ? String(rawValue.mediaText) : '';
+                const mediaUrl  = rawValue?.mediaUrl  != null ? String(rawValue.mediaUrl)  : '';
+                const mediaKey  = rawValue?.mediaKey  != null ? String(rawValue.mediaKey)  : '';
+
+                if (q.required && !mediaText.trim()) {
+                    throw new BadRequestException(
+                        `La pregunta "${q.text}" requiere una descripción.`,
+                    );
+                }
+
+                if (!mediaText.trim() && !mediaUrl && !q.required) {
+                    continue;
+                }
+
+                normalizedAnswers.push({
+                    questionId: q.id,
+                    questionText: q.text,
+                    type: 'media',
+                    mediaText,
+                    mediaUrl,
+                    mediaKey,
                 });
             }
         }

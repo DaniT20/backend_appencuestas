@@ -91,7 +91,7 @@ class QuestionSchemaClass {
     @Prop({ required: true })
     id: string;
 
-    @Prop({ required: true, enum: ['open', 'single', 'multiple', 'matrix', 'list'] })
+    @Prop({ required: true, enum: ['open', 'single', 'multiple', 'matrix', 'list', 'media'] })
     type: string;
 
     @Prop({ required: true })

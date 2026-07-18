@@ -24,7 +24,7 @@ export class FormsService {
             }
             questionIds.add(q.id);
 
-            if (!['open', 'single', 'multiple', 'matrix', 'list'].includes(q.type)) {
+            if (!['open', 'single', 'multiple', 'matrix', 'list', 'media'].includes(q.type)) {
                 throw new BadRequestException(`Tipo de pregunta inválido: ${q.type}`);
             }
 

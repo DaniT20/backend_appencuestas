@@ -44,7 +44,7 @@ class AnswerSchemaClass {
     @Prop({ required: true })
     questionId: string;
 
-    @Prop({ required: true, enum: ['open', 'single', 'multiple', 'matrix', 'list'] })
+    @Prop({ required: true, enum: ['open', 'single', 'multiple', 'matrix', 'list', 'media'] })
     type: string;
 
     @Prop()
@@ -67,6 +67,15 @@ class AnswerSchemaClass {
 
     @Prop({ type: [ListAnswerItemSchema], default: [] })
     listAnswers?: ListAnswerItemSchemaClass[];
+
+    @Prop()
+    mediaText?: string;
+
+    @Prop()
+    mediaUrl?: string;
+
+    @Prop()
+    mediaKey?: string;
 }
 const AnswerSchema = SchemaFactory.createForClass(AnswerSchemaClass);
 

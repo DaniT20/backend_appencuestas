@@ -42,7 +42,7 @@ export class UsersService {
       username,
       passwordHash,
       role: dto.role,
-      parroquia: dto.parroquia ?? null,
+      parroquias: dto.parroquias ?? [],
       phone: dto.phone ?? null,
       lider: dto.lider ?? false,
       active: dto.active ?? true,
@@ -64,7 +64,8 @@ export class UsersService {
       username: string;
       password: string;
       role: 'admin' | 'enumerator' | 'gestor';
-      parroquia?: string;
+      parroquias: string[];
+      phone?: string;
       active: boolean;
     }> = [];
 
@@ -78,7 +79,10 @@ export class UsersService {
       const username = item?.username?.trim?.().toLowerCase?.() ?? '';
       const password = item?.password ?? '';
       const role = item?.role;
-      const parroquia = item?.parroquia ?? undefined;
+      // Compatibilidad: Excel puede traer parroquia singular → convertir a array
+      const parroquia = item?.parroquia?.trim?.() ?? '';
+      const parroquias = parroquia ? [parroquia] : [];
+      const phone = item?.phone?.trim?.() || undefined;
       const active = item?.active ?? true;
 
       if (!name) {
@@ -106,6 +110,11 @@ export class UsersService {
         continue;
       }
 
+      if (!parroquia) {
+        errors.push({ row, username, reason: 'parroquia is required' });
+        continue;
+      }
+
       if (seen.has(username)) {
         errors.push({ row, username, reason: 'duplicate username in request' });
         continue;
@@ -113,15 +122,7 @@ export class UsersService {
 
       seen.add(username);
 
-      validItems.push({
-        row,
-        name,
-        username,
-        password,
-        role,
-        parroquia,
-        active,
-      });
+      validItems.push({ row, name, username, password, role, parroquias, phone, active });
     }
 
     if (!validItems.length) {
@@ -147,7 +148,8 @@ export class UsersService {
       username: string;
       passwordHash: string;
       role: 'admin' | 'enumerator' | 'gestor';
-      parroquia?: string;
+      parroquias: string[];
+      phone?: string;
       active: boolean;
     }> = [];
 
@@ -168,7 +170,8 @@ export class UsersService {
         username: item.username,
         passwordHash,
         role: item.role,
-        parroquia: item.parroquia,
+        parroquias: item.parroquias,
+        phone: item.phone,
         active: item.active,
       });
     }
@@ -193,14 +196,22 @@ export class UsersService {
     if (search?.trim()) {
       const text = search.trim();
       filter.$or = [
-        { username: { $regex: text, $options: 'i' } },
-        { name: { $regex: text, $options: 'i' } },
+        { username:   { $regex: text, $options: 'i' } },
+        { name:       { $regex: text, $options: 'i' } },
+        { parroquia:  { $regex: text, $options: 'i' } },
+        { parroquias: { $regex: text, $options: 'i' } },
       ];
     }
 
     if (role) filter.role = role;
 
-    if (parroquia?.trim()) filter.parroquia = parroquia.trim();
+    if (parroquia?.trim()) {
+      const p = parroquia.trim();
+      filter.$and = [
+        ...(filter.$and ?? []),
+        { $or: [{ parroquia: p }, { parroquias: p }] },
+      ];
+    }
 
     if (active === 'true' || active === 'false') {
       filter.active = active === 'true';
@@ -265,8 +276,8 @@ export class UsersService {
       payload.role = dto.role;
     }
 
-    if (dto.parroquia !== undefined) {
-      payload.parroquia = dto.parroquia || null;
+    if (dto.parroquias !== undefined) {
+      payload.parroquias = dto.parroquias;
     }
 
     if (dto.phone !== undefined) {

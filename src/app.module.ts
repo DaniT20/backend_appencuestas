@@ -13,6 +13,7 @@ import { BiModule } from './bi/bi.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { PublicDataModule } from './public-data/public-data.module';
 import { ParishesModule } from './parishes/parishes.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ParishesModule } from './parishes/parishes.module';
     TrackingModule,
     PublicDataModule,
     ParishesModule,
+    UploadModule,
   ],
   controllers: [AppController],   // 👈 IMPORTANTE
   providers: [AppService],        // 👈 IMPORTANTE

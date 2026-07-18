@@ -182,6 +182,7 @@ async function createNestServer() {
 export const api = functions
   .runWith({
     memory: '4GB',
+    timeoutSeconds: 540,
   })
   .https.onRequest(async (req, res) => {
     try {
