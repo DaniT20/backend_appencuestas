@@ -37,4 +37,8 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     @IsBoolean()
     @IsOptional()
     active?: boolean;
+
+    @IsString()
+    @IsOptional()
+    photoUrl?: string | null;
 }

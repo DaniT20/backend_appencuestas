@@ -28,6 +28,12 @@ export class User extends Document {
 
     @Prop({ default: true })
     active: boolean;
+
+    @Prop({ default: null })
+    lastLogin: Date | null;
+
+    @Prop({ default: null })
+    photoUrl: string | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

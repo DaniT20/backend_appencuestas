@@ -19,6 +19,11 @@ export class UsersController {
         return this.usersService.bulkCreate(dto.users);
     }
 
+    @Get('activity-report')
+    activityReport() {
+        return this.usersService.getActivityReport();
+    }
+
     @Get()
     findAll(@Query() query: QueryUsersDto) {
         return this.usersService.findAll(query);

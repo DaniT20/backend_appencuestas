@@ -43,6 +43,8 @@ export class AuthService {
             expiresIn: '30d',
         });
 
+        this.users.updateLastLogin(user._id.toString()).catch(() => {});
+
         return {
             access_token: token,
             user: {

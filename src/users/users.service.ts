@@ -292,6 +292,10 @@ export class UsersService {
       payload.active = dto.active;
     }
 
+    if (dto.photoUrl !== undefined) {
+      payload.photoUrl = dto.photoUrl ?? null;
+    }
+
     const updated = await this.model
       .findOneAndUpdate({ _id: id }, { $set: payload }, { new: true })
       .lean()
@@ -305,5 +309,36 @@ export class UsersService {
     const res = await this.model.findByIdAndDelete(id).lean().exec();
     if (!res) throw new NotFoundException('User not found');
     return { deleted: true, id };
+  }
+
+  async updateLastLogin(id: string) {
+    await this.model
+      .findByIdAndUpdate(id, { $set: { lastLogin: new Date() } })
+      .exec();
+  }
+
+  async getActivityReport() {
+    const users = await this.model
+      .find({})
+      .select({ name: 1, username: 1, role: 1, parroquias: 1, lider: 1, active: 1, lastLogin: 1, createdAt: 1 })
+      .sort({ lastLogin: -1 })
+      .lean()
+      .exec();
+
+    const now = new Date();
+    const d7  = new Date(now.getTime() - 7  * 24 * 60 * 60 * 1000);
+    const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    return {
+      stats: {
+        total:          users.length,
+        active:         users.filter(u => u.active).length,
+        inactive:       users.filter(u => !u.active).length,
+        loggedIn7Days:  users.filter(u => u.lastLogin && new Date(u.lastLogin) >= d7).length,
+        loggedIn30Days: users.filter(u => u.lastLogin && new Date(u.lastLogin) >= d30).length,
+        neverLoggedIn:  users.filter(u => !u.lastLogin).length,
+      },
+      users,
+    };
   }
 }
