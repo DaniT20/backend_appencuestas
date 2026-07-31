@@ -4,6 +4,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUsersDto } from './dto/query-users.dto';
 import { BulkCreateUsersDto } from './dto/bulk-create-users.dto';
+import { BulkParroquiasEncuestaDto } from './dto/bulk-parroquias-encuesta.dto';
 
 @Controller('users')
 export class UsersController {
@@ -37,6 +38,11 @@ export class UsersController {
     @Get(':id')
     findOne(@Param('id') id: string) {
         return this.usersService.findOne(id);
+    }
+
+    @Patch('bulk-parroquias-encuesta')
+    bulkUpdateParroquiasEncuesta(@Body() dto: BulkParroquiasEncuestaDto) {
+        return this.usersService.bulkUpdateParroquiasEncuesta(dto);
     }
 
     @Patch(':id')

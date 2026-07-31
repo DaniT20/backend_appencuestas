@@ -14,6 +14,12 @@ export class QueryUsersDto {
     @IsString()
     parroquia?: string;
 
+    // Filtra por parroquiasEncuesta; si el gestor no tiene ese campo
+    // o está vacío, cae en sus parroquias de trabajo como fallback.
+    @IsOptional()
+    @IsString()
+    encuestaParroquia?: string;
+
     @IsOptional()
     @IsBooleanString()
     active?: string;

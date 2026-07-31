@@ -35,6 +35,7 @@ export class AuthService {
             name: user.name ?? null,
             role: user.role,
             parroquias: user.parroquias ?? [],
+            parroquiasEncuesta: user.parroquiasEncuesta ?? [],
             lider: user.lider ?? false,
         };
 

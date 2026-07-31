@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 
 import { ResponseDoc } from '../responses/response.schema';
 import { User } from '../users/user.schema';
+import { Parish } from '../parishes/parish.schema';
 import { TrackingQueryDto } from './dto/tracking-query.dto';
 
 const TZ = 'America/Guayaquil';
@@ -29,6 +30,7 @@ export class TrackingService {
     constructor(
         @InjectModel(ResponseDoc.name) private readonly responseModel: Model<ResponseDoc>,
         @InjectModel(User.name) private readonly userModel: Model<User>,
+        @InjectModel(Parish.name) private readonly parishModel: Model<Parish>,
     ) {}
 
     async getDashboard(dto: TrackingQueryDto) {
@@ -166,6 +168,58 @@ export class TrackingService {
         ]).exec();
 
         return result;
+    }
+
+    async getParishReport(dto: TrackingQueryDto): Promise<{ parroquia: string; count: number; lider: string | null }[]> {
+        const match: any = {};
+        if (dto.formId) match.formId = dto.formId;
+        const range = buildDateRange(dto.dateFrom, dto.dateTo);
+        if (range) match.submittedAt = range;
+
+        const [withCounts, allParishes, lideres] = await Promise.all([
+            this.responseModel.aggregate([
+                { $match: match },
+                {
+                    $lookup: {
+                        from: 'users',
+                        let: { uid: '$userId' },
+                        pipeline: [
+                            { $match: { $expr: { $eq: [{ $toString: '$_id' }, '$$uid'] } } },
+                            { $project: { parroquiasEncuesta: 1, _id: 0 } },
+                        ],
+                        as: 'userInfo',
+                    },
+                },
+                { $unwind: '$userInfo' },
+                { $unwind: '$userInfo.parroquiasEncuesta' },
+                { $group: { _id: '$userInfo.parroquiasEncuesta', count: { $sum: 1 } } },
+                { $project: { _id: 0, parroquia: '$_id', count: 1 } },
+            ]).exec() as unknown as { parroquia: string; count: number }[],
+
+            this.parishModel.find().sort({ order: 1, name: 1 }).lean().exec(),
+
+            this.userModel
+                .find({ role: 'gestor', lider: true, active: true })
+                .select('name parroquiasEncuesta')
+                .lean()
+                .exec(),
+        ]);
+
+        const countMap = new Map(withCounts.map(r => [r.parroquia, r.count]));
+
+        // Build a map: parroquia -> lider name (first match)
+        const liderMap = new Map<string, string>();
+        for (const u of lideres) {
+            for (const p of (u as any).parroquiasEncuesta ?? []) {
+                if (!liderMap.has(p)) liderMap.set(p, (u as any).name);
+            }
+        }
+
+        return allParishes.map(p => ({
+            parroquia: p.name,
+            count: countMap.get(p.name) ?? 0,
+            lider: liderMap.get(p.name) ?? null,
+        })).sort((a, b) => b.count - a.count);
     }
 
     async getGeoPoints(dto: TrackingQueryDto) {

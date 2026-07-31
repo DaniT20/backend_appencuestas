@@ -13,6 +13,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUsersDto } from './dto/query-users.dto';
 import { BulkCreateUserItemDto } from './dto/bulk-create-users.dto';
+import { BulkParroquiasEncuestaDto } from './dto/bulk-parroquias-encuesta.dto';
 
 @Injectable()
 export class UsersService {
@@ -43,6 +44,7 @@ export class UsersService {
       passwordHash,
       role: dto.role,
       parroquias: dto.parroquias ?? [],
+      parroquiasEncuesta: dto.parroquiasEncuesta ?? [],
       phone: dto.phone ?? null,
       lider: dto.lider ?? false,
       active: dto.active ?? true,
@@ -189,7 +191,7 @@ export class UsersService {
   }
 
   async findAll(query: QueryUsersDto) {
-    const { page = 1, limit = 10, search, active, role, parroquia } = query;
+    const { page = 1, limit = 10, search, active, role, parroquia, encuestaParroquia } = query;
 
     const filter: FilterQuery<User> = {};
 
@@ -210,6 +212,14 @@ export class UsersService {
       filter.$and = [
         ...(filter.$and ?? []),
         { $or: [{ parroquia: p }, { parroquias: p }] },
+      ];
+    }
+
+    if (encuestaParroquia?.trim()) {
+      const p = encuestaParroquia.trim();
+      filter.$and = [
+        ...(filter.$and ?? []),
+        { parroquiasEncuesta: p },
       ];
     }
 
@@ -280,6 +290,10 @@ export class UsersService {
       payload.parroquias = dto.parroquias;
     }
 
+    if (dto.parroquiasEncuesta !== undefined) {
+      payload.parroquiasEncuesta = dto.parroquiasEncuesta;
+    }
+
     if (dto.phone !== undefined) {
       payload.phone = dto.phone || null;
     }
@@ -309,6 +323,21 @@ export class UsersService {
     const res = await this.model.findByIdAndDelete(id).lean().exec();
     if (!res) throw new NotFoundException('User not found');
     return { deleted: true, id };
+  }
+
+  async bulkUpdateParroquiasEncuesta(dto: BulkParroquiasEncuestaDto) {
+    const { userIds, parroquiasEncuesta, mode = 'replace' } = dto;
+    if (!userIds?.length) throw new BadRequestException('Debe enviar al menos un usuario.');
+
+    const update = mode === 'add'
+      ? { $addToSet: { parroquiasEncuesta: { $each: parroquiasEncuesta } } }
+      : { $set: { parroquiasEncuesta } };
+
+    const result = await this.model
+      .updateMany({ _id: { $in: userIds } }, update)
+      .exec();
+
+    return { updated: result.modifiedCount };
   }
 
   async updateLastLogin(id: string) {

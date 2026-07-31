@@ -23,6 +23,11 @@ export class CreateUserDto {
     @IsOptional()
     parroquias?: string[];
 
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    parroquiasEncuesta?: string[];
+
     @IsString()
     @IsOptional()
     phone?: string;

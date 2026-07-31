@@ -22,4 +22,9 @@ export class TrackingController {
     getGeo(@Query() query: TrackingQueryDto) {
         return this.svc.getGeoPoints(query);
     }
+
+    @Get('parish-report')
+    getParishReport(@Query() query: TrackingQueryDto) {
+        return this.svc.getParishReport(query);
+    }
 }

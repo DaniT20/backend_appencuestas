@@ -20,6 +20,9 @@ export class User extends Document {
     @Prop({ type: [String], default: [] })
     parroquias: string[];
 
+    @Prop({ type: [String], default: [] })
+    parroquiasEncuesta: string[];
+
     @Prop({ default: null })
     phone: string | null;
 
